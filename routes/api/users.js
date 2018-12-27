@@ -17,13 +17,15 @@ router.get('/current', passport.authenticate('jwt', { session: false }), (req, r
 })
 
 router.post("/register", (req, res) => {
+  // console.log(req.body);
+  
   const { errors, isValid } = validateRegisterInput(req.body);
 
   if (!isValid) {
     return res.status(400).json(errors);
   }
 
-  User.findOne({ name: req.body.name }).then(user => {
+  User.findOne({ handle: req.body.handle }).then(user => {
     User.findOne({ email: req.body.email })
       .then(user => {
         if (user) {
@@ -32,34 +34,33 @@ router.post("/register", (req, res) => {
           return res.status(400).json(errors);
         } else {
           const newUser = new User({
-            name: req.body.name,
+            handle: req.body.handle,
             email: req.body.email,
-            password: req.body.password
+            password: req.body.password, 
           })
+          bcrypt.genSalt(10, (err, salt) => {
+            bcrypt.hash(newUser.password, salt, (err, hash) => {
+              if (err) throw err;
+              newUser.password = hash;
+              newUser
+                .save()
+                .then(user => {
+                  const payload = { id: user.id, handle: user.handle };
+
+                  jwt.sign(payload, keys.secretOrKey, { expiresIn: 3600 }, (err, token) => {
+                    res.json({
+                      success: true,
+                      token: "Bearer " + token
+                    });
+                  });
+                })
+                .catch(err => console.log(err));
+            });
+          });
         }
       })
-
-      bcrypt.genSalt(10, (err, salt) => {
-        bcrypt.hash(newUser.password, salt, (err, hash) => {
-          if (err) throw err;
-          newUser.password = hash;
-          newUser
-            .save()
-            .then(user => {
-              const payload = { id: user.id, name: user.name };
-
-              jwt.sign(payload, keys.secretOrKey, { expiresIn: 3600 }, (err, token) => {
-                res.json({
-                  success: true,
-                  token: "Bearer " + token
-                });
-              });
-            })
-            .catch(err => console.log(err));
-        });
-      });
     }
-  });
+  );
 });
 
 router.post("/login", (req, res) => {
