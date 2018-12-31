@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom'
-import './navbar.css'
+// import './navbar.css' no css yet fam
 
 class NavBar extends React.Component {
   constructor(props) {

@@ -17,7 +17,6 @@ router.get('/current', passport.authenticate('jwt', { session: false }), (req, r
 })
 
 router.post("/register", (req, res) => {
-  // console.log(req.body);
   
   const { errors, isValid } = validateRegisterInput(req.body);
 
@@ -28,6 +27,7 @@ router.post("/register", (req, res) => {
   User.findOne({ handle: req.body.handle }).then(user => {
     User.findOne({ email: req.body.email })
       .then(user => {
+        
         if (user) {
           // Use the validations to send the error
           errors.email = 'Email already exists';
